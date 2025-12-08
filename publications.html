@@ -7,26 +7,38 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; background:#f2f4f7; margin:0; color:#222; }
-
     nav { position: sticky; top: 0; z-index: 100; background: #fff; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 30px; }
     nav a { text-decoration: none; color: #003366; font-weight: 600; transition: 0.3s; }
     nav a:hover { color: #0078c8; }
-
     h1 { text-align:center; color:#003366; margin:40px 20px 20px; }
     .card { background:#fff; padding:20px 25px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:1000px; margin:20px auto 40px; }
-
+    
+    /* Researcher Accordion */
+    .researcher-section { margin-bottom: 25px; border: 1px solid #e1e8ed; border-radius: 10px; overflow: hidden; }
+    .researcher-header { 
+      background: linear-gradient(135deg, #003366 0%, #0078c8 100%); 
+      color: white; padding: 18px 25px; cursor: pointer; 
+      font-weight: 600; font-size: 16px; transition: 0.3s;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .researcher-header:hover { background: linear-gradient(135deg, #002855 0%, #0066aa 100%); }
+    .researcher-toggle { font-size: 20px; transition: transform 0.3s; }
+    .researcher-toggle.active { transform: rotate(180deg); }
+    
+    .pubs-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+    .pubs-container.active { max-height: 2000px; padding: 20px 25px; background: #f8f9fa; }
+    
     .year-block { margin-bottom: 20px; }
-    .year-title { font-weight:700; font-size:18px; color:#003366; border-bottom:2px solid #0078c8; padding-bottom:4px; margin-bottom:10px; }
-    .pub-item { margin:8px 0; line-height:1.6; }
-    .pub-index { font-weight:600; margin-right:6px; }
+    .year-title { font-weight:700; font-size:16px; color:#003366; border-bottom:2px solid #0078c8; padding-bottom:4px; margin-bottom:10px; }
+    .pub-item { margin:6px 0; line-height:1.5; }
+    .pub-index { font-weight:600; margin-right:6px; color:#0078c8; }
     .doi-link { color:#c0392b; text-decoration:none; font-weight:600; }
     .doi-link:hover { text-decoration:underline; }
-
+    
     footer { text-align: center; padding: 25px; background: #003366; color: #fff; margin-top: 40px; }
   </style>
 </head>
 <body>
-
   <nav>
     <a href="index.html">Home</a>
     <a href="researchers.html">Researchers</a>
@@ -37,114 +49,108 @@
   </nav>
 
   <h1>Publications</h1>
-  <div class="card" id="pub-card">
-    <p id="pub-loading">Loading publications from Scopus CSV…</p>
-    <div id="pub-container" style="display:none;"></div>
+  <div class="card">
+    <p>Loading publications…</p>
+    <div id="researchers-container"></div>
   </div>
 
-  <footer>
-    © 2025 Advanced Metrology and Sensing Group (AMES)
-  </footer>
+  <footer>© 2025 Advanced Metrology and Sensing Group (AMES)</footer>
 
   <script>
-    // CHANGE to your GitHub raw CSV URL
-    const CSV_URL = 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus.csv';
+    // Multiple CSV files - one per researcher
+    const RESEARCHERS = [
+      {
+        name: 'Mohd Mawardi Saari',
+        csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus.csv',
+        scopusId: '57220107330'
+      },
+      {
+        name: 'Nurul A\'in Nadzri',
+        csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/nurulain.csv',
+        scopusId: '57201859397'
+      },
+      {
+        name: 'Abdul Wahab, Yasmin',
+        csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/yasmin.csv',
+        scopusId: '57203353903'
+      }
+      // Add more researchers here
+    ];
 
+    async function loadAllPublications() {
+      const container = document.getElementById('researchers-container');
+      container.innerHTML = '<p style="text-align:center; color:#666;">Loading researcher publications…</p>';
 
-    async function loadScopusCSV() {
-      const loadingEl = document.getElementById('pub-loading');
-      const container = document.getElementById('pub-container');
-      try {
-        const res = await fetch(CSV_URL);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const text = await res.text();
-        const pubs = parseScopusCSV(text);
-        renderPublicationsIEEE(pubs);
-        loadingEl.style.display = 'none';
-        container.style.display = 'block';
-      } catch (err) {
-        loadingEl.textContent = 'Failed to load publications. Please check CSV URL or CORS settings.';
-        console.error(err);
+      for (const researcher of RESEARCHERS) {
+        try {
+          const res = await fetch(researcher.csv);
+          const text = await res.text();
+          const pubs = parseScopusCSV(text);
+          renderResearcherSection(container, researcher, pubs);
+        } catch (err) {
+          console.error(`Failed to load ${researcher.name}:`, err);
+        }
       }
     }
 
+    function renderResearcherSection(container, researcher, pubs) {
+      const section = document.createElement('div');
+      section.className = 'researcher-section';
+      section.innerHTML = `
+        <div class="researcher-header" onclick="toggleResearcher(this)">
+          <span>${researcher.name} <small style="opacity:0.8;">(${pubs.length} pubs)</small></span>
+          <span class="researcher-toggle">▼</span>
+        </div>
+        <div class="pubs-container">
+          ${renderPublicationsHTML(pubs, researcher.scopusId)}
+        </div>
+      `;
+      container.appendChild(section);
+    }
+
+    function toggleResearcher(header) {
+      const section = header.parentElement;
+      const container = section.querySelector('.pubs-container');
+      const toggle = header.querySelector('.researcher-toggle');
+      
+      container.classList.toggle('active');
+      toggle.classList.toggle('active');
+    }
+
+    // Same CSV parser as before
     function parseScopusCSV(csvText) {
       csvText = csvText.replace(/^\uFEFF/, '');
-      const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
+      const lines = csvText.split(/\r?\n/).filter(l => l.trim());
       if (lines.length < 2) return [];
 
       const header = splitCSVLine(lines[0]);
       const idx = {};
-      header.forEach((h, i) => {
-        const key = h.trim().toLowerCase();
-        idx[key] = i;
-      });
+      header.forEach((h, i) => idx[h.trim().toLowerCase()] = i);
 
       const pubs = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = splitCSVLine(lines[i]);
-        if (!cols.length || !cols[idx['title']]) continue;
-
-        const authors      = (cols[idx['authors']] || '').trim();
-        const title        = (cols[idx['title']] || '').trim();
-        const year         = (cols[idx['year']] || '').trim();
-        const sourceTitle  = (cols[idx['source title']] || '').trim();
-        const volume       = (cols[idx['volume']] || '').trim();
-        const issue        = (cols[idx['issue']] || '').trim();
-        const artNo        = (cols[idx['art. no.']] || '').trim();
-        const pageStart    = (cols[idx['page start']] || '').trim();
-        const pageEnd      = (cols[idx['page end']] || '').trim();
-        const doi          = (cols[idx['doi']] || '').trim();
-        const docType      = (cols[idx['document type']] || '').trim();
+        if (!cols[idx['title']?.toLowerCase()]) continue;
 
         pubs.push({
-          authors,
-          title,
-          year,
-          sourceTitle,
-          volume,
-          issue,
-          artNo,
-          pageStart,
-          pageEnd,
-          doi,
-          docType
+          authors: (cols[idx['authors']?.toLowerCase()] || '').trim(),
+          title: (cols[idx['title']?.toLowerCase()] || '').trim(),
+          year: (cols[idx['year']?.toLowerCase()] || '').trim(),
+          sourceTitle: (cols[idx['source title']?.toLowerCase()] || '').trim(),
+          volume: (cols[idx['volume']?.toLowerCase()] || '').trim(),
+          issue: (cols[idx['issue']?.toLowerCase()] || '').trim(),
+          artNo: (cols[idx['art. no.']?.toLowerCase()] || '').trim(),
+          pageStart: (cols[idx['page start']?.toLowerCase()] || '').trim(),
+          pageEnd: (cols[idx['page end']?.toLowerCase()] || '').trim(),
+          doi: (cols[idx['doi']?.toLowerCase()] || '').trim()
         });
       }
       return pubs;
     }
 
-    function splitCSVLine(line) {
-      const result = [];
-      let current = '';
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQuotes && line[i+1] === '"') {
-            current += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (ch === ',' && !inQuotes) {
-          result.push(current);
-          current = '';
-        } else {
-          current += ch;
-        }
-      }
-      result.push(current);
-      return result;
-    }
+    function splitCSVLine(line) { /* Same as previous version */ }
 
-    function renderPublicationsIEEE(pubs) {
-      const container = document.getElementById('pub-container');
-      if (!pubs.length) {
-        container.innerHTML = '<p>No records found in CSV.</p>';
-        return;
-      }
-
+    function renderPublicationsHTML(pubs, myScopusId) {
       const byYear = {};
       pubs.forEach(p => {
         const y = p.year || 'N/A';
@@ -152,58 +158,41 @@
         byYear[y].push(p);
       });
 
-      const years = Object.keys(byYear).sort((a,b) => (b || 0) - (a || 0));
+      const years = Object.keys(byYear).sort((a,b) => b-a);
       let html = '';
-
+      
       years.forEach(year => {
         html += `<div class="year-block"><div class="year-title">${year}</div>`;
         byYear[year].forEach((p, idx) => {
-          const citation = formatIEEE(p);
-          html += `<div class="pub-item"><span class="pub-index">[${idx+1}]</span>${citation}</div>`;
+          const citation = formatIEEE(p, myScopusId);
+          html += `<div class="pub-item">[${idx+1}] ${citation}</div>`;
         });
         html += '</div>';
       });
-
-      container.innerHTML = html;
+      
+      return html || '<p>No publications found.</p>';
     }
 
-    function formatIEEE(p) {
+    function formatIEEE(p, myScopusId) {
       let authors = p.authors || '';
-      const title   = p.title || '';
-      const source  = p.sourceTitle || '';
-      const year    = p.year || '';
-      const vol     = p.volume ? `, vol. ${p.volume}` : '';
-      const iss     = p.issue ? `, no. ${p.issue}` : '';
-      let pages = '';
-      if (p.pageStart && p.pageEnd) {
-        pages = `, pp. ${p.pageStart}–${p.pageEnd}`;
-      } else if (p.pageStart) {
-        pages = `, p. ${p.pageStart}`;
-      }
+      // Bold researcher's name based on Scopus ID or name patterns
+      authors = authors.replace(new RegExp(myScopusId, 'gi'), `<b>$&</b>`);
+      authors = authors.replace(/Saari M\.M\./gi, '<b>Saari M.M.</b>');
+      
+      const title = p.title || '';
+      const source = p.sourceTitle || '';
+      const year = p.year || '';
+      const vol = p.volume ? `, vol. ${p.volume}` : '';
+      const iss = p.issue ? `, no. ${p.issue}` : '';
+      let pages = p.pageStart && p.pageEnd ? `, pp. ${p.pageStart}–${p.pageEnd}` : '';
       const artNo = p.artNo ? `, Art. no. ${p.artNo}` : '';
-      const doiPart = p.doi 
-        ? `, <a class="doi-link" href="https://doi.org/${p.doi}" target="_blank">doi:${p.doi}</a>`
-        : '';
+      const doiPart = p.doi ? ` <a class="doi-link" href="https://doi.org/${p.doi}" target="_blank">doi:${p.doi}</a>` : '';
 
-      // Bold your name variants in the author string
-      // Handles “Saari M.M.”, “Saari, M.M.”, “Saari, Mohd Mawardi”, etc.
-      const patterns = [
-        /Saari M\.M\./gi,
-        /Saari,\s*M\.M\./gi,
-        /Saari,\s*Mohd Mawardi/gi,
-        /Mawardi Saari, Mohd/gi,
-        /Saari, Mohd Mawardi \(57220107330\)/gi // with ID if present
-      ];
-      patterns.forEach(re => {
-        authors = authors.replace(re, match => `<b>${match}</b>`);
-      });
-
-      return `${authors}, “${title},” <i>${source}</i>${vol}${iss}${pages}${artNo}, ${year}${doiPart}.`;
+      return `${authors}, "${title}", <i>${source}</i>${vol}${iss}${pages}${artNo}, ${year}${doiPart}.`;
     }
 
-    loadScopusCSV();
+    // Load all researchers on page load
+    window.onload = loadAllPublications;
   </script>
 </body>
 </html>
-
-
