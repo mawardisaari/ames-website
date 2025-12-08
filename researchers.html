@@ -15,9 +15,28 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 30px; max-width: 1200px; margin: auto; padding: 0 20px 40px; }
     .researcher-card { background: #fff; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); transition: all 0.4s ease; overflow: hidden; }
     .researcher-card:hover { transform: translateY(-12px) scale(1.02); box-shadow: 0 20px 40px rgba(0,51,102,0.15); }
-    .photo-container { position: relative; height: 220px; overflow: hidden; }
-    .researcher-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    
+    /* 🔥 FACE-CENTERED PHOTO FIX */
+    .photo-container { 
+      position: relative; 
+      height: 220px; 
+      overflow: hidden; 
+    }
+    .researcher-card img { 
+      width: 100%; 
+      height: 100%; 
+      /* ✅ FACE CENTERING - PERFECT! */
+      object-fit: cover; 
+      object-position: center top 20%;  /* 👆 FACE AT TOP 20% */
+      transition: transform 0.4s ease; 
+    }
     .researcher-card:hover img { transform: scale(1.1); }
+    
+    /* ✅ PORTRAIT MODE - FACES PERFECTLY CENTERED */
+    .researcher-card.portrait img {
+      object-position: center 25%;  /* 👤 Perfect face centering */
+    }
+    
     .card-content { padding: 25px; }
     .card-title { color: #003366; margin: 0 0 12px; font-size: 1.4em; font-weight: 700; }
     .expertise { color: #666; font-size: 0.9em; line-height: 1.5; margin-bottom: 20px; }
@@ -35,16 +54,15 @@
 <body>
 
 <!-- ============================================================================ -->
-<!-- 🔥🔥🔥 LINKS CONFIGURATION - EDIT ONLY HERE! 🔥🔥🔥 -->
+<!-- 🔥 LINKS CONFIGURATION - YOUR LINKS ALREADY FILLED! 🔥 -->
 <!-- ============================================================================ -->
 <script>
 const RESEARCHERS = [
-  // ============================================================================
-  // 1️⃣ DR. MOHD MAWARDI SAARE - EDIT THESE LINKS
-  // ============================================================================
+  // 1️⃣ DR. MOHD MAWARDI SAARE ✅
   {
     name: "Dr. Mohd Mawardi Saari",
     photo: "https://i1.rgstatic.net/ii/profile.image/323597686509571-1454163108724_Q128/Mohd-Saari.jpg",
+    portraitMode: true,  // ✅ FACE CENTERING ON
     expertise: "Magnetic sensing, eddy-current NDT systems, and advanced metrology. Specializes in magnetic sensors, magnetic nanoparticle characterization, and optimization algorithms.",
     links: {
       googleScholar: "https://scholar.google.com/citations?user=1C5nBuAAAAAJ&hl=en",
@@ -55,12 +73,11 @@ const RESEARCHERS = [
     stats: { publications: 85, citations: 1200, hIndex: 12 }
   },
 
-  // ============================================================================
-  // 2️⃣ DR. NURUL A'IN NADZRI - EDIT THESE LINKS
-  // ============================================================================
+  // 2️⃣ DR. NURUL A'IN NADZRI ✅
   {
     name: "Dr. Nurul A'in Nadzri",
     photo: "https://ftkee.umpsa.edu.my/images/2025/05/20/2727.jpg",
+    portraitMode: true,  // ✅ FACE CENTERING ON
     expertise: "Expert in measurement systems, eddy current testing, and sensor analytics. Focuses on defect detection, signal processing, and non-destructive evaluation techniques.",
     links: {
       googleScholar: "https://scholar.google.com/citations?user=YfCaqVYAAAAJ&hl=en",
@@ -71,12 +88,11 @@ const RESEARCHERS = [
     stats: { publications: 25, citations: 350, hIndex: 8 }
   },
 
-  // ============================================================================
-  // 3️⃣ DR. YASMIN ABDUL WAHAB - EDIT THESE LINKS
-  // ============================================================================
+  // 3️⃣ DR. YASMIN ABDUL WAHAB ✅
   {
     name: "Dr. Yasmin Abdul Wahab",
     photo: "https://ftkee.umpsa.edu.my/images/2020/09/04/01315.jpg",
+    portraitMode: true,  // ✅ FACE CENTERING ON
     expertise: "Specialist in instrumentation, electromagnetic evaluation, and sensing innovation. Research in tomography systems, semiconductor devices, and bio-sensing applications.",
     links: {
       googleScholar: "https://scholar.google.com/citations?hl=en&user=5k1e4wMAAAAJ",
@@ -86,24 +102,6 @@ const RESEARCHERS = [
     },
     stats: { publications: 45, citations: 650, hIndex: 10 }
   }
-  
-  // ============================================================================
-  // 🆕 ADD NEW RESEARCHER HERE - COPY ABOVE BLOCK!
-  // ============================================================================
-  /*
-  {
-    name: "Dr. New Researcher",
-    photo: "YOUR_PHOTO_URL",
-    expertise: "Your expertise description here.",
-    links: {
-      googleScholar: "YOUR_GOOGLE_ID",
-      scopus: "YOUR_SCOPUS_ID",
-      umpExpert: "YOUR_UMP_ID", 
-      orcid: "YOUR_ORCID"
-    },
-    stats: { publications: 0, citations: 0, hIndex: 0 }
-  }
-  */
 ];
 </script>
 
@@ -122,41 +120,41 @@ const RESEARCHERS = [
   <footer>© 2025 Advanced Metrology and Sensing Group (AMES)</footer>
 
 <script>
-  // 🔥 AUTOMATICALLY GENERATE RESEARCHER CARDS
+  // 🔥 FACE-CENTERED PHOTO GENERATOR
   document.addEventListener('DOMContentLoaded', function() {
     const grid = document.getElementById('researchers-grid');
     
-    RESEARCHERS.forEach((researcher, index) => {
+    RESEARCHERS.forEach((researcher) => {
       const card = document.createElement('div');
-      card.className = 'researcher-card';
+      card.className = `researcher-card ${researcher.portraitMode ? 'portrait' : ''}`;
       card.innerHTML = `
         <div class="photo-container">
-          <img src="${researcher.photo}" alt="${researcher.name}" />
+          <img src="${researcher.photo}" alt="${researcher.name}" loading="lazy" />
         </div>
         <div class="card-content">
           <h3 class="card-title">${researcher.name}</h3>
           <p class="expertise">${researcher.expertise}</p>
           <div class="links-grid">
-            <a href="${researcher.links.googleScholar}" class="link-btn" target="_blank">
+            <a href="${researcher.links.googleScholar}" class="link-btn" target="_blank" rel="noopener">
               <i class="fa-brands fa-google-scholar"></i> Google Scholar
             </a>
-            <a href="${researcher.links.scopus}" class="link-btn" target="_blank">
+            <a href="${researcher.links.scopus}" class="link-btn" target="_blank" rel="noopener">
               <i class="fa-solid fa-magnet"></i> Scopus
             </a>
-            <a href="${researcher.links.umpExpert}" class="link-btn" target="_blank">
+            <a href="${researcher.links.umpExpert}" class="link-btn" target="_blank" rel="noopener">
               <i class="fa-solid fa-graduation-cap"></i> UMP Expert
             </a>
-            <a href="${researcher.links.orcid}" class="link-btn" target="_blank">
+            <a href="${researcher.links.orcid}" class="link-btn" target="_blank" rel="noopener">
               <i class="fa-solid fa-link"></i> ORCID
             </a>
           </div>
           <div class="stats">
             <div class="stat-item">
-              <div class="stat-number">${researcher.stats.publications}</div>
+              <div class="stat-number">${researcher.stats.publications.toLocaleString()}</div>
               <div class="stat-label">Publications</div>
             </div>
             <div class="stat-item">
-              <div class="stat-number">${researcher.stats.citations}</div>
+              <div class="stat-number">${researcher.stats.citations.toLocaleString()}</div>
               <div class="stat-label">Citations</div>
             </div>
             <div class="stat-item">
@@ -173,4 +171,3 @@ const RESEARCHERS = [
 
 </body>
 </html>
-
