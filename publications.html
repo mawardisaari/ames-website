@@ -13,7 +13,6 @@
     h1 { text-align:center; color:#003366; margin:40px 20px 20px; }
     .card { background:#fff; padding:20px 25px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:1000px; margin:20px auto 40px; }
     
-    /* Researcher Accordion */
     .researcher-section { margin-bottom: 25px; border: 1px solid #e1e8ed; border-radius: 10px; overflow: hidden; }
     .researcher-header { 
       background: linear-gradient(135deg, #003366 0%, #0078c8 100%); 
@@ -50,14 +49,14 @@
 
   <h1>Publications</h1>
   <div class="card">
-    <p>Loading publications…</p>
+    <p id="loading">Loading publications…</p>
     <div id="researchers-container"></div>
   </div>
 
   <footer>© 2025 Advanced Metrology and Sensing Group (AMES)</footer>
 
   <script>
-    // Multiple CSV files - one per researcher
+    // ✅ YOUR 3 CSV FILES - UPLOAD TO GITHUB FIRST!
     const RESEARCHERS = [
       {
         name: 'Mohd Mawardi Saari',
@@ -74,22 +73,38 @@
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-yasmin.csv',
         scopusId: '57203353903'
       }
-      // Add more researchers here
     ];
 
     async function loadAllPublications() {
       const container = document.getElementById('researchers-container');
-      container.innerHTML = '<p style="text-align:center; color:#666;">Loading researcher publications…</p>';
-
+      const loadingEl = document.getElementById('loading');
+      
       for (const researcher of RESEARCHERS) {
         try {
+          console.log(`Loading ${researcher.name}...`);
           const res = await fetch(researcher.csv);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          
           const text = await res.text();
           const pubs = parseScopusCSV(text);
+          console.log(`${researcher.name}: ${pubs.length} publications`);
+          
           renderResearcherSection(container, researcher, pubs);
+          
         } catch (err) {
-          console.error(`Failed to load ${researcher.name}:`, err);
+          console.error(`Failed ${researcher.name}:`, err);
+          container.innerHTML += `<div class="researcher-section">
+            <div class="researcher-header">
+              <span>${researcher.name} <small style="color:#ff6b6b;">(Failed to load)</small></span>
+            </div>
+          </div>`;
         }
+      }
+      
+      if (container.children.length === 0) {
+        loadingEl.textContent = 'No publications loaded. Check CSV files.';
+      } else {
+        loadingEl.style.display = 'none';
       }
     }
 
@@ -117,7 +132,6 @@
       toggle.classList.toggle('active');
     }
 
-    // Same CSV parser as before
     function parseScopusCSV(csvText) {
       csvText = csvText.replace(/^\uFEFF/, '');
       const lines = csvText.split(/\r?\n/).filter(l => l.trim());
@@ -125,30 +139,55 @@
 
       const header = splitCSVLine(lines[0]);
       const idx = {};
-      header.forEach((h, i) => idx[h.trim().toLowerCase()] = i);
+      header.forEach((h, i) => {
+        const key = h.trim().toLowerCase();
+        idx[key] = i;
+      });
 
       const pubs = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = splitCSVLine(lines[i]);
-        if (!cols[idx['title']?.toLowerCase()]) continue;
+        if (!cols.length || !cols[idx['title']]?.trim()) continue;
 
         pubs.push({
-          authors: (cols[idx['authors']?.toLowerCase()] || '').trim(),
-          title: (cols[idx['title']?.toLowerCase()] || '').trim(),
-          year: (cols[idx['year']?.toLowerCase()] || '').trim(),
-          sourceTitle: (cols[idx['source title']?.toLowerCase()] || '').trim(),
-          volume: (cols[idx['volume']?.toLowerCase()] || '').trim(),
-          issue: (cols[idx['issue']?.toLowerCase()] || '').trim(),
-          artNo: (cols[idx['art. no.']?.toLowerCase()] || '').trim(),
-          pageStart: (cols[idx['page start']?.toLowerCase()] || '').trim(),
-          pageEnd: (cols[idx['page end']?.toLowerCase()] || '').trim(),
-          doi: (cols[idx['doi']?.toLowerCase()] || '').trim()
+          authors: (cols[idx['authors']] || '').trim(),
+          title: (cols[idx['title']] || '').trim(),
+          year: (cols[idx['year']] || '').trim(),
+          sourceTitle: (cols[idx['source title']] || '').trim(),
+          volume: (cols[idx['volume']] || '').trim(),
+          issue: (cols[idx['issue']] || '').trim(),
+          artNo: (cols[idx['art. no.']] || '').trim(),
+          pageStart: (cols[idx['page start']] || '').trim(),
+          pageEnd: (cols[idx['page end']] || '').trim(),
+          doi: (cols[idx['doi']] || '').trim()
         });
       }
       return pubs;
     }
 
-    function splitCSVLine(line) { /* Same as previous version */ }
+    function splitCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i+1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      result.push(current);
+      return result;
+    }
 
     function renderPublicationsHTML(pubs, myScopusId) {
       const byYear = {};
@@ -158,14 +197,14 @@
         byYear[y].push(p);
       });
 
-      const years = Object.keys(byYear).sort((a,b) => b-a);
+      const years = Object.keys(byYear).sort((a,b) => (b || 0) - (a || 0));
       let html = '';
       
       years.forEach(year => {
         html += `<div class="year-block"><div class="year-title">${year}</div>`;
         byYear[year].forEach((p, idx) => {
           const citation = formatIEEE(p, myScopusId);
-          html += `<div class="pub-item">[${idx+1}] ${citation}</div>`;
+          html += `<div class="pub-item"><span class="pub-index">[${idx+1}]</span>${citation}</div>`;
         });
         html += '</div>';
       });
@@ -175,9 +214,8 @@
 
     function formatIEEE(p, myScopusId) {
       let authors = p.authors || '';
-      // Bold researcher's name based on Scopus ID or name patterns
+      // Bold researcher's name based on Scopus ID
       authors = authors.replace(new RegExp(myScopusId, 'gi'), `<b>$&</b>`);
-      authors = authors.replace(/Saari M\.M\./gi, '<b>Saari M.M.</b>');
       
       const title = p.title || '';
       const source = p.sourceTitle || '';
@@ -186,15 +224,12 @@
       const iss = p.issue ? `, no. ${p.issue}` : '';
       let pages = p.pageStart && p.pageEnd ? `, pp. ${p.pageStart}–${p.pageEnd}` : '';
       const artNo = p.artNo ? `, Art. no. ${p.artNo}` : '';
-      const doiPart = p.doi ? ` <a class="doi-link" href="https://doi.org/${p.doi}" target="_blank">doi:${p.doi}</a>` : '';
+      const doiPart = p.doi ? ` <a class="doi-link" href="https://doi.org/${p.doi}" target="_blank">[${p.doi}]</a>` : '';
 
       return `${authors}, "${title}", <i>${source}</i>${vol}${iss}${pages}${artNo}, ${year}${doiPart}.`;
     }
 
-    // Load all researchers on page load
     window.onload = loadAllPublications;
   </script>
 </body>
 </html>
-
-
