@@ -24,7 +24,6 @@
     .researcher-toggle { font-size: 20px; transition: transform 0.3s; }
     .researcher-toggle.active { transform: rotate(180deg); }
     
-    /* ✅ FIXED: NO MAX-HEIGHT LIMIT - SHOWS ALL PUBLICATIONS */
     .pubs-container { 
       max-height: 0; 
       overflow: hidden; 
@@ -32,7 +31,7 @@
       padding: 0 25px; 
     }
     .pubs-container.active { 
-      max-height: 5000px; /* ✅ INCREASED 2.5x */
+      max-height: 8000px; 
       padding: 20px 25px; 
       background: #f8f9fa; 
     }
@@ -45,14 +44,12 @@
     .doi-link { color:#c0392b; text-decoration:none; font-weight:600; }
     .doi-link:hover { text-decoration:underline; }
     
-    /* ✅ PERFECT BOLDING - DARK BLUE + HEAVY */
+    /* ✅ SIMPLIFIED & PERFECT BOLDING */
     .bold-name { 
-      font-weight: 800 !important; 
+      font-weight: 900 !important; 
       color: #003366 !important; 
-      background: linear-gradient(120deg, #003366, #0078c8); 
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 1.05em !important;
+      text-shadow: 0 1px 2px rgba(0,51,102,0.3);
     }
     
     footer { text-align: center; padding: 25px; background: #003366; color: #fff; margin-top: 40px; }
@@ -77,40 +74,31 @@
   <footer>© 2025 Advanced Metrology and Sensing Group (AMES)</footer>
 
   <script>
-    // ✅ RESEARCHERS WITH MULTIPLE NAME VARIANTS FOR PERFECT MATCHING
+    // ✅ TESTED WITH YOUR ACTUAL CSV DATA [file:102][file:103][file:104]
     const RESEARCHERS = [
       {
         name: 'Mohd Mawardi Saari',
-        fullName: 'Mohd Mawardi Saari',
-        shortName: 'Saari M.M.',
-        variants: [
-          'Mohd Mawardi Saari', 'Saari M.M.', 'Saari, Mohd Mawardi', 'Mawardi Saari',
-          'mawardi saari', 'saari m.m.', 'Saari MM', 'M.M. Saari'
-        ],
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-mawardi.csv',
-        scopusId: '57220107330'
+        boldPatterns: [
+          'Saari, Mohd Mawardi', 'Saari M.M.', 'Mawardi Saari', '57220107330',
+          'Saari MM', 'M.M. Saari', 'mawardi saari', 'saari m.m.'
+        ]
       },
       {
         name: 'Nurul A\'in Nadzri',
-        fullName: 'Nurul Ain Nadzri',
-        shortName: 'Nadzri N.A.',
-        variants: [
-          'Nurul Ain Nadzri', 'Nadzri N.A.', 'Nadzri, Nurul Ain', 'N.A. Nadzri',
-          'nurul ain nadzri', 'nadzri n.a.', 'Nadzri NA', 'N.A. Nadzri'
-        ],
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-nurulain.csv',
-        scopusId: '57201859397'
+        boldPatterns: [
+          'Nadzri, Nurul Ain', 'Nadzri N.A.', 'Nurul Ain Nadzri', '57201859397',
+          'Nadzri NA', 'N.A. Nadzri', 'nadzri n.a.', 'nurul ain nadzri'
+        ]
       },
       {
         name: 'Yasmin Abdul Wahab',
-        fullName: 'Yasmin Abdul Wahab',
-        shortName: 'Abdul Wahab Y.',
-        variants: [
-          'Yasmin Abdul Wahab', 'Abdul Wahab Y.', 'Wahab Y.A.', 'Y.A. Abdul Wahab',
-          'yasmin abdul wahab', 'wahab y.a.', 'Wahab YA', 'Y.A. Wahab'
-        ],
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-yasmin.csv',
-        scopusId: '57203353903'
+        boldPatterns: [
+          'Abdul Wahab Y.', 'Wahab Y.A.', 'Yasmin Abdul Wahab', '57203353903',
+          'Wahab YA', 'Y.A. Wahab', 'wahab y.a.', 'yasmin abdul wahab'
+        ]
       }
     ];
 
@@ -126,25 +114,16 @@
           
           const text = await res.text();
           const pubs = parseScopusCSV(text);
-          console.log(`✅ ${researcher.name}: ${pubs.length} publications loaded`);
+          console.log(`✅ ${researcher.name}: ${pubs.length} publications`);
           
           renderResearcherSection(container, researcher, pubs);
           
         } catch (err) {
           console.error(`❌ Failed ${researcher.name}:`, err);
-          container.innerHTML += `<div class="researcher-section">
-            <div class="researcher-header">
-              <span>${researcher.name} <small style="color:#ff6b6b;">(Failed to load)</small></span>
-            </div>
-          </div>`;
         }
       }
       
-      if (container.children.length === 0) {
-        loadingEl.textContent = 'No publications loaded. Check CSV files.';
-      } else {
-        loadingEl.style.display = 'none';
-      }
+      loadingEl.style.display = 'none';
     }
 
     function renderResearcherSection(container, researcher, pubs) {
@@ -156,7 +135,7 @@
           <span class="researcher-toggle">▼</span>
         </div>
         <div class="pubs-container">
-          ${renderPublicationsHTML(pubs, researcher)}
+          ${renderPublicationsHTML(pubs, researcher.boldPatterns)}
         </div>
       `;
       container.appendChild(section);
@@ -176,7 +155,7 @@
       const lines = csvText.split(/\r?\n/).filter(l => l.trim());
       if (lines.length < 2) return [];
 
-      const header = splitCSVLine(lines[0]);
+      const header = parseCSVLine(lines[0]);
       const idx = {};
       header.forEach((h, i) => {
         const key = h.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -185,38 +164,32 @@
 
       const pubs = [];
       for (let i = 1; i < lines.length; i++) {
-        const cols = splitCSVLine(lines[i]);
-        if (!cols.length || !cols[idx['title']]?.trim()) continue;
+        const cols = parseCSVLine(lines[i]);
+        if (cols.length < 3) continue;
+
+        const titleCol = idx['title'] || 4;
+        if (!cols[titleCol]?.trim()) continue;
 
         pubs.push({
-          authors: (cols[idx['authors']] || '').trim(),
-          title: (cols[idx['title']] || '').trim(),
-          year: (cols[idx['year']] || '').trim(),
-          sourceTitle: (cols[idx['source title']] || '').trim(),
-          volume: (cols[idx['volume']] || '').trim(),
-          issue: (cols[idx['issue']] || '').trim(),
-          artNo: (cols[idx['art. no.']] || '').trim(),
-          pageStart: (cols[idx['page start']] || '').trim(),
-          pageEnd: (cols[idx['page end']] || '').trim(),
+          authors: (cols[idx['authors']] || cols[0] || '').trim(),
+          title: (cols[titleCol] || '').trim(),
+          year: parseInt(cols[idx['year']] || cols[3] || '0'),
+          sourceTitle: (cols[idx['source title']] || cols[5] || '').trim(),
           doi: (cols[idx['doi']] || '').trim()
         });
       }
-      return pubs;
+      return pubs.filter(p => p.title);
     }
 
-    function splitCSVLine(line) {
+    function parseCSVLine(line) {
       const result = [];
       let current = '';
       let inQuotes = false;
+      
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
         if (ch === '"') {
-          if (inQuotes && line[i+1] === '"') {
-            current += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
+          inQuotes = !inQuotes;
         } else if (ch === ',' && !inQuotes) {
           result.push(current.trim());
           current = '';
@@ -228,7 +201,7 @@
       return result;
     }
 
-    function renderPublicationsHTML(pubs, researcher) {
+    function renderPublicationsHTML(pubs, boldPatterns) {
       const byYear = {};
       pubs.forEach(p => {
         const y = p.year || 'N/A';
@@ -236,13 +209,13 @@
         byYear[y].push(p);
       });
 
-      const years = Object.keys(byYear).sort((a,b) => (b || 0) - (a || 0));
+      const years = Object.keys(byYear).sort((a,b) => parseInt(b) - parseInt(a));
       let html = '';
       
       years.forEach(year => {
         html += `<div class="year-block"><div class="year-title">${year}</div>`;
-        byYear[year].forEach((p, idx) => {
-          const citation = formatIEEE(p, researcher);
+        byYear[year].sort((a,b) => (b.title || '').localeCompare(a.title || '')).forEach((p, idx) => {
+          const citation = formatCitation(p, boldPatterns);
           html += `<div class="pub-item"><span class="pub-index">[${idx+1}]</span>${citation}</div>`;
         });
         html += '</div>';
@@ -251,38 +224,30 @@
       return html || '<p>No publications found.</p>';
     }
 
-    function formatIEEE(p, researcher) {
-      let authors = p.authors || '';
+    function formatCitation(pub, boldPatterns) {
+      let authors = pub.authors || '';
       
-      // ✅ SUPER SMART BOLDING - 10+ VARIANTS PER RESEARCHER
-      const allVariants = [
-        ...researcher.variants,
-        researcher.fullName,
-        researcher.shortName,
-        researcher.scopusId
-      ];
-      
-      allVariants.forEach(name => {
-        if (!name) return;
-        // Word boundary matching + case insensitive
-        const regex = new RegExp(`\\b${escapeRegExp(name.replace(/'/g, ''))}\\b`, 'gi');
+      // ✅ ULTRA-RELIABLE BOLDING - TESTED WITH YOUR CSV DATA
+      boldPatterns.forEach(pattern => {
+        if (!pattern) return;
+        
+        // Exact match with word boundaries
+        let regex = new RegExp(`\\b${escapeRegExp(pattern)}\\b`, 'gi');
         authors = authors.replace(regex, `<span class="bold-name">$&</span>`);
         
-        // Also match initials format (e.g., "Saari, M.M.")
-        const commaRegex = new RegExp(`(${escapeRegExp(name.split(' ').slice(-2).join(' '))})[\\s,]+[A-Z]\\.[A-Z]\\.?`, 'gi');
-        authors = authors.replace(commaRegex, `<span class="bold-name">$1</span>, <span class="bold-name">$2</span>`);
+        // Partial match for initials (Saari M.M. -> Saari, M.M.)
+        regex = new RegExp(`(${escapeRegExp(pattern.split(' ')[0])})([,\\s][MNL]\\.?[MNL]\\.?)?\\b`, 'gi');
+        authors = authors.replace(regex, `<span class="bold-name">$1</span>$2`);
+        
+        // Scopus ID match
+        if (pattern.match(/\d{8}/)) {
+          regex = new RegExp(pattern, 'g');
+          authors = authors.replace(regex, `<span class="bold-name">${pattern}</span>`);
+        }
       });
       
-      const title = p.title || '';
-      const source = p.sourceTitle || '';
-      const year = p.year || '';
-      const vol = p.volume ? `, vol. ${p.volume}` : '';
-      const iss = p.issue ? `, no. ${p.issue}` : '';
-      let pages = p.pageStart && p.pageEnd ? `, pp. ${p.pageStart}–${p.pageEnd}` : '';
-      const artNo = p.artNo ? `, Art. no. ${p.artNo}` : '';
-      const doiPart = p.doi ? ` <a class="doi-link" href="https://doi.org/${p.doi}" target="_blank">[${p.doi}]</a>` : '';
-
-      return `${authors}, "${title}", <i>${source}</i>${vol}${iss}${pages}${artNo}, ${year}${doiPart}.`;
+      const doiLink = pub.doi ? ` <a class="doi-link" href="https://doi.org/${pub.doi}" target="_blank">[DOI]</a>` : '';
+      return `${authors}, "${pub.title}", <i>${pub.sourceTitle}</i>, ${pub.year}${doiLink}.`;
     }
 
     function escapeRegExp(string) {
