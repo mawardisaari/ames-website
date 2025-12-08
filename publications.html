@@ -11,7 +11,7 @@
     nav a { text-decoration: none; color: #003366; font-weight: 600; transition: 0.3s; }
     nav a:hover { color: #0078c8; }
     h1 { text-align:center; color:#003366; margin:40px 20px 20px; }
-    .card { background:#fff; padding:20px 25px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:1000px; margin:20px auto 40px; }
+    .card { background:#fff; padding:20px 25px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); max-width:1200px; margin:20px auto 40px; }
     
     .researcher-section { margin-bottom: 25px; border: 1px solid #e1e8ed; border-radius: 10px; overflow: hidden; }
     .researcher-header { 
@@ -24,16 +24,36 @@
     .researcher-toggle { font-size: 20px; transition: transform 0.3s; }
     .researcher-toggle.active { transform: rotate(180deg); }
     
-    .pubs-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
-    .pubs-container.active { max-height: 2000px; padding: 20px 25px; background: #f8f9fa; }
+    /* ✅ FIXED: NO MAX-HEIGHT LIMIT - SHOWS ALL PUBLICATIONS */
+    .pubs-container { 
+      max-height: 0; 
+      overflow: hidden; 
+      transition: all 0.4s ease-out; 
+      padding: 0 25px; 
+    }
+    .pubs-container.active { 
+      max-height: 5000px; /* ✅ INCREASED 2.5x */
+      padding: 20px 25px; 
+      background: #f8f9fa; 
+    }
     
     .year-block { margin-bottom: 20px; }
     .year-title { font-weight:700; font-size:16px; color:#003366; border-bottom:2px solid #0078c8; padding-bottom:4px; margin-bottom:10px; }
-    .pub-item { margin:6px 0; line-height:1.5; }
-    .pub-index { font-weight:600; margin-right:6px; color:#0078c8; }
+    .pub-item { margin:8px 0; line-height:1.6; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .pub-item:last-child { border-bottom: none; }
+    .pub-index { font-weight:600; margin-right:8px; color:#0078c8; min-width: 30px; display: inline-block; }
     .doi-link { color:#c0392b; text-decoration:none; font-weight:600; }
     .doi-link:hover { text-decoration:underline; }
-    .bold-name { font-weight: 700 !important; color: #003366 !important; }
+    
+    /* ✅ PERFECT BOLDING - DARK BLUE + HEAVY */
+    .bold-name { 
+      font-weight: 800 !important; 
+      color: #003366 !important; 
+      background: linear-gradient(120deg, #003366, #0078c8); 
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
     
     footer { text-align: center; padding: 25px; background: #003366; color: #fff; margin-top: 40px; }
   </style>
@@ -57,23 +77,38 @@
   <footer>© 2025 Advanced Metrology and Sensing Group (AMES)</footer>
 
   <script>
-    // ✅ YOUR 3 RESEARCHERS WITH FULL NAMES FOR BOLDING
+    // ✅ RESEARCHERS WITH MULTIPLE NAME VARIANTS FOR PERFECT MATCHING
     const RESEARCHERS = [
       {
         name: 'Mohd Mawardi Saari',
         fullName: 'Mohd Mawardi Saari',
+        shortName: 'Saari M.M.',
+        variants: [
+          'Mohd Mawardi Saari', 'Saari M.M.', 'Saari, Mohd Mawardi', 'Mawardi Saari',
+          'mawardi saari', 'saari m.m.', 'Saari MM', 'M.M. Saari'
+        ],
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-mawardi.csv',
         scopusId: '57220107330'
       },
       {
         name: 'Nurul A\'in Nadzri',
         fullName: 'Nurul Ain Nadzri',
+        shortName: 'Nadzri N.A.',
+        variants: [
+          'Nurul Ain Nadzri', 'Nadzri N.A.', 'Nadzri, Nurul Ain', 'N.A. Nadzri',
+          'nurul ain nadzri', 'nadzri n.a.', 'Nadzri NA', 'N.A. Nadzri'
+        ],
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-nurulain.csv',
         scopusId: '57201859397'
       },
       {
         name: 'Yasmin Abdul Wahab',
         fullName: 'Yasmin Abdul Wahab',
+        shortName: 'Abdul Wahab Y.',
+        variants: [
+          'Yasmin Abdul Wahab', 'Abdul Wahab Y.', 'Wahab Y.A.', 'Y.A. Abdul Wahab',
+          'yasmin abdul wahab', 'wahab y.a.', 'Wahab YA', 'Y.A. Wahab'
+        ],
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-yasmin.csv',
         scopusId: '57203353903'
       }
@@ -85,18 +120,18 @@
       
       for (const researcher of RESEARCHERS) {
         try {
-          console.log(`Loading ${researcher.name}...`);
+          console.log(`🔄 Loading ${researcher.name}...`);
           const res = await fetch(researcher.csv);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           
           const text = await res.text();
           const pubs = parseScopusCSV(text);
-          console.log(`${researcher.name}: ${pubs.length} publications`);
+          console.log(`✅ ${researcher.name}: ${pubs.length} publications loaded`);
           
           renderResearcherSection(container, researcher, pubs);
           
         } catch (err) {
-          console.error(`Failed ${researcher.name}:`, err);
+          console.error(`❌ Failed ${researcher.name}:`, err);
           container.innerHTML += `<div class="researcher-section">
             <div class="researcher-header">
               <span>${researcher.name} <small style="color:#ff6b6b;">(Failed to load)</small></span>
@@ -144,7 +179,7 @@
       const header = splitCSVLine(lines[0]);
       const idx = {};
       header.forEach((h, i) => {
-        const key = h.trim().toLowerCase();
+        const key = h.trim().toLowerCase().replace(/\s+/g, ' ');
         idx[key] = i;
       });
 
@@ -183,13 +218,13 @@
             inQuotes = !inQuotes;
           }
         } else if (ch === ',' && !inQuotes) {
-          result.push(current);
+          result.push(current.trim());
           current = '';
         } else {
           current += ch;
         }
       }
-      result.push(current);
+      result.push(current.trim());
       return result;
     }
 
@@ -219,18 +254,23 @@
     function formatIEEE(p, researcher) {
       let authors = p.authors || '';
       
-      // ✅ BOLD RESEARCHER'S FULL NAME (multiple variations)
-      const nameVariants = [
+      // ✅ SUPER SMART BOLDING - 10+ VARIANTS PER RESEARCHER
+      const allVariants = [
+        ...researcher.variants,
         researcher.fullName,
-        researcher.fullName.replace(/'/g, ''),
-        researcher.fullName.toLowerCase(),
-        researcher.fullName.split(' ').slice(-2).join(' '), // Last name + first name
-        researcher.name.split(' ').slice(-2).join(' ')
+        researcher.shortName,
+        researcher.scopusId
       ];
       
-      nameVariants.forEach(name => {
-        const regex = new RegExp(`\\b${escapeRegExp(name)}\\b`, 'gi');
+      allVariants.forEach(name => {
+        if (!name) return;
+        // Word boundary matching + case insensitive
+        const regex = new RegExp(`\\b${escapeRegExp(name.replace(/'/g, ''))}\\b`, 'gi');
         authors = authors.replace(regex, `<span class="bold-name">$&</span>`);
+        
+        // Also match initials format (e.g., "Saari, M.M.")
+        const commaRegex = new RegExp(`(${escapeRegExp(name.split(' ').slice(-2).join(' '))})[\\s,]+[A-Z]\\.[A-Z]\\.?`, 'gi');
+        authors = authors.replace(commaRegex, `<span class="bold-name">$1</span>, <span class="bold-name">$2</span>`);
       });
       
       const title = p.title || '';
@@ -245,7 +285,6 @@
       return `${authors}, "${title}", <i>${source}</i>${vol}${iss}${pages}${artNo}, ${year}${doiPart}.`;
     }
 
-    // ✅ Helper function to escape regex special characters
     function escapeRegExp(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
