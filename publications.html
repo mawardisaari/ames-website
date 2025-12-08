@@ -33,6 +33,7 @@
     .pub-index { font-weight:600; margin-right:6px; color:#0078c8; }
     .doi-link { color:#c0392b; text-decoration:none; font-weight:600; }
     .doi-link:hover { text-decoration:underline; }
+    .bold-name { font-weight: 700 !important; color: #003366 !important; }
     
     footer { text-align: center; padding: 25px; background: #003366; color: #fff; margin-top: 40px; }
   </style>
@@ -56,20 +57,23 @@
   <footer>© 2025 Advanced Metrology and Sensing Group (AMES)</footer>
 
   <script>
-    // ✅ YOUR 3 CSV FILES - UPLOAD TO GITHUB FIRST!
+    // ✅ YOUR 3 RESEARCHERS WITH FULL NAMES FOR BOLDING
     const RESEARCHERS = [
       {
         name: 'Mohd Mawardi Saari',
+        fullName: 'Mohd Mawardi Saari',
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-mawardi.csv',
         scopusId: '57220107330'
       },
       {
         name: 'Nurul A\'in Nadzri',
+        fullName: 'Nurul Ain Nadzri',
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-nurulain.csv',
         scopusId: '57201859397'
       },
       {
         name: 'Yasmin Abdul Wahab',
+        fullName: 'Yasmin Abdul Wahab',
         csv: 'https://raw.githubusercontent.com/mawardisaari/ames-website/main/scopus-yasmin.csv',
         scopusId: '57203353903'
       }
@@ -117,7 +121,7 @@
           <span class="researcher-toggle">▼</span>
         </div>
         <div class="pubs-container">
-          ${renderPublicationsHTML(pubs, researcher.scopusId)}
+          ${renderPublicationsHTML(pubs, researcher)}
         </div>
       `;
       container.appendChild(section);
@@ -189,7 +193,7 @@
       return result;
     }
 
-    function renderPublicationsHTML(pubs, myScopusId) {
+    function renderPublicationsHTML(pubs, researcher) {
       const byYear = {};
       pubs.forEach(p => {
         const y = p.year || 'N/A';
@@ -203,7 +207,7 @@
       years.forEach(year => {
         html += `<div class="year-block"><div class="year-title">${year}</div>`;
         byYear[year].forEach((p, idx) => {
-          const citation = formatIEEE(p, myScopusId);
+          const citation = formatIEEE(p, researcher);
           html += `<div class="pub-item"><span class="pub-index">[${idx+1}]</span>${citation}</div>`;
         });
         html += '</div>';
@@ -212,10 +216,22 @@
       return html || '<p>No publications found.</p>';
     }
 
-    function formatIEEE(p, myScopusId) {
+    function formatIEEE(p, researcher) {
       let authors = p.authors || '';
-      // Bold researcher's name based on Scopus ID
-      authors = authors.replace(new RegExp(myScopusId, 'gi'), `<b>$&</b>`);
+      
+      // ✅ BOLD RESEARCHER'S FULL NAME (multiple variations)
+      const nameVariants = [
+        researcher.fullName,
+        researcher.fullName.replace(/'/g, ''),
+        researcher.fullName.toLowerCase(),
+        researcher.fullName.split(' ').slice(-2).join(' '), // Last name + first name
+        researcher.name.split(' ').slice(-2).join(' ')
+      ];
+      
+      nameVariants.forEach(name => {
+        const regex = new RegExp(`\\b${escapeRegExp(name)}\\b`, 'gi');
+        authors = authors.replace(regex, `<span class="bold-name">$&</span>`);
+      });
       
       const title = p.title || '';
       const source = p.sourceTitle || '';
@@ -227,6 +243,11 @@
       const doiPart = p.doi ? ` <a class="doi-link" href="https://doi.org/${p.doi}" target="_blank">[${p.doi}]</a>` : '';
 
       return `${authors}, "${title}", <i>${source}</i>${vol}${iss}${pages}${artNo}, ${year}${doiPart}.`;
+    }
+
+    // ✅ Helper function to escape regex special characters
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     window.onload = loadAllPublications;
