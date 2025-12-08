@@ -5,24 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Researchers – AMES</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; margin: 0; background: #f2f4f7; color: #222; }
-
     nav { position: sticky; top: 0; z-index: 100; background: #fff; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 30px; }
     nav a { text-decoration: none; color: #003366; font-weight: 600; transition: 0.3s; }
     nav a:hover { color: #0078c8; }
-
     h1 { text-align: center; color: #003366; margin: 40px 0 30px; }
-
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 30px; max-width: 1100px; margin: auto; padding: 0 20px 40px; }
-    .researcher-card { background: #fff; padding: 20px; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: 0.3s; text-align: center; }
-    .researcher-card:hover { transform: translateY(-6px); }
-    .researcher-card img { width: 100%; border-radius: 12px; }
-
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 30px; max-width: 1200px; margin: auto; padding: 0 20px 40px; }
+    .researcher-card { background: #fff; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); transition: all 0.4s ease; overflow: hidden; }
+    .researcher-card:hover { transform: translateY(-12px) scale(1.02); box-shadow: 0 20px 40px rgba(0,51,102,0.15); }
+    .photo-container { position: relative; height: 220px; overflow: hidden; }
+    .researcher-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .researcher-card:hover img { transform: scale(1.1); }
+    .card-content { padding: 25px; }
+    .card-title { color: #003366; margin: 0 0 12px; font-size: 1.4em; font-weight: 700; }
+    .expertise { color: #666; font-size: 0.9em; line-height: 1.5; margin-bottom: 20px; }
+    .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+    .link-btn { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border: 1px solid #dee2e6; border-radius: 10px; text-decoration: none; color: #495057; font-size: 0.85em; font-weight: 500; transition: all 0.3s ease; }
+    .link-btn:hover { background: linear-gradient(135deg, #0078c8, #005fa3); color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,120,200,0.3); }
+    .link-btn i { font-size: 1.1em; }
+    .stats { display: flex; justify-content: space-around; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; }
+    .stat-item { text-align: center; }
+    .stat-number { font-size: 1.3em; font-weight: 700; color: #0078c8; }
+    .stat-label { font-size: 0.75em; color: #666; margin-top: 2px; }
     footer { text-align: center; padding: 25px; background: #003366; color: #fff; margin-top: 40px; }
   </style>
 </head>
 <body>
+
+<!-- ============================================================================ -->
+<!-- 🔥🔥🔥 LINKS CONFIGURATION - EDIT ONLY HERE! 🔥🔥🔥 -->
+<!-- ============================================================================ -->
+<script>
+const RESEARCHERS = [
+  // ============================================================================
+  // 1️⃣ DR. MOHD MAWARDI SAARE - EDIT THESE LINKS
+  // ============================================================================
+  {
+    name: "Dr. Mohd Mawardi Saari",
+    photo: "https://i1.rgstatic.net/ii/profile.image/323597686509571-1454163108724_Q128/Mohd-Saari.jpg",
+    expertise: "Magnetic sensing, eddy-current NDT systems, and advanced metrology. Specializes in magnetic sensors, magnetic nanoparticle characterization, and optimization algorithms.",
+    links: {
+      googleScholar: "https://scholar.google.com/citations?user=1C5nBuAAAAAJ&hl=en",
+      scopus: "https://www.scopus.com/authid/detail.uri?authorId=57220107330",
+      umpExpert: "https://expert.ump.edu.my/profile/01761",
+      orcid: "https://orcid.org/0000-0002-3049-5548"
+    },
+    stats: { publications: 85, citations: 1200, hIndex: 12 }
+  },
+
+  // ============================================================================
+  // 2️⃣ DR. NURUL A'IN NADZRI - EDIT THESE LINKS
+  // ============================================================================
+  {
+    name: "Dr. Nurul A'in Nadzri",
+    photo: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=250&fit=crop&crop=face",
+    expertise: "Expert in measurement systems, eddy current testing, and sensor analytics. Focuses on defect detection, signal processing, and non-destructive evaluation techniques.",
+    links: {
+      googleScholar: "https://scholar.google.com/citations?user=YOUR_GOOGLE_ID_HERE",
+      scopus: "https://www.scopus.com/authid/detail.uri?authorId=57201859397",
+      umpExpert: "https://expert.ump.edu.my/profile/YOUR_UMP_ID_HERE",
+      orcid: "https://orcid.org/YOUR_ORCID_HERE"
+    },
+    stats: { publications: 25, citations: 350, hIndex: 8 }
+  },
+
+  // ============================================================================
+  // 3️⃣ DR. YASMIN ABDUL WAHAB - EDIT THESE LINKS
+  // ============================================================================
+  {
+    name: "Dr. Yasmin Abdul Wahab",
+    photo: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=250&fit=crop&crop=face",
+    expertise: "Specialist in instrumentation, electromagnetic evaluation, and sensing innovation. Research in tomography systems, semiconductor devices, and bio-sensing applications.",
+    links: {
+      googleScholar: "https://scholar.google.com/citations?user=YOUR_GOOGLE_ID_HERE",
+      scopus: "https://www.scopus.com/authid/detail.uri?authorId=57203353903",
+      umpExpert: "https://expert.ump.edu.my/profile/YOUR_UMP_ID_HERE",
+      orcid: "https://orcid.org/YOUR_ORCID_HERE"
+    },
+    stats: { publications: 45, citations: 650, hIndex: 10 }
+  }
+  
+  // ============================================================================
+  // 🆕 ADD NEW RESEARCHER HERE - COPY ABOVE BLOCK!
+  // ============================================================================
+  /*
+  {
+    name: "Dr. New Researcher",
+    photo: "YOUR_PHOTO_URL",
+    expertise: "Your expertise description here.",
+    links: {
+      googleScholar: "YOUR_GOOGLE_ID",
+      scopus: "YOUR_SCOPUS_ID",
+      umpExpert: "YOUR_UMP_ID", 
+      orcid: "YOUR_ORCID"
+    },
+    stats: { publications: 0, citations: 0, hIndex: 0 }
+  }
+  */
+];
+</script>
 
   <nav>
     <a href="index.html">Home</a>
@@ -34,26 +117,59 @@
   </nav>
 
   <h1>Our Researchers</h1>
-  <div class="grid">
-    <div class="researcher-card">
-      <img src="https://via.placeholder.com/300x250" alt="Researcher 1" />
-      <h3>Dr. Mohd Mawardi Saari</h3>
-      <p>Magnetic sensing, eddy-current systems, and advanced metrology.</p>
-    </div>
-    <div class="researcher-card">
-      <img src="https://via.placeholder.com/300x250" alt="Researcher 2" />
-      <h3>Dr. Nurul A'in Nadzri</h3>
-      <p>Measurement systems, analytics, and applied sensing.</p>
-    </div>
-    <div class="researcher-card">
-      <img src="https://via.placeholder.com/300x250" alt="Researcher 3" />
-      <h3>Dr. Yasmin Wahab</h3>
-      <p>Instrumentation, electromagnetic evaluation, sensing innovation.</p>
-    </div>
-  </div>
+  <div class="grid" id="researchers-grid"></div>
 
-  <footer>
-    © 2025 Advanced Metrology and Sensing Group (AMES)
-  </footer>
+  <footer>© 2025 Advanced Metrology and Sensing Group (AMES)</footer>
+
+<script>
+  // 🔥 AUTOMATICALLY GENERATE RESEARCHER CARDS
+  document.addEventListener('DOMContentLoaded', function() {
+    const grid = document.getElementById('researchers-grid');
+    
+    RESEARCHERS.forEach((researcher, index) => {
+      const card = document.createElement('div');
+      card.className = 'researcher-card';
+      card.innerHTML = `
+        <div class="photo-container">
+          <img src="${researcher.photo}" alt="${researcher.name}" />
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">${researcher.name}</h3>
+          <p class="expertise">${researcher.expertise}</p>
+          <div class="links-grid">
+            <a href="${researcher.links.googleScholar}" class="link-btn" target="_blank">
+              <i class="fa-brands fa-google-scholar"></i> Google Scholar
+            </a>
+            <a href="${researcher.links.scopus}" class="link-btn" target="_blank">
+              <i class="fa-solid fa-magnet"></i> Scopus
+            </a>
+            <a href="${researcher.links.umpExpert}" class="link-btn" target="_blank">
+              <i class="fa-solid fa-graduation-cap"></i> UMP Expert
+            </a>
+            <a href="${researcher.links.orcid}" class="link-btn" target="_blank">
+              <i class="fa-solid fa-link"></i> ORCID
+            </a>
+          </div>
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-number">${researcher.stats.publications}</div>
+              <div class="stat-label">Publications</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">${researcher.stats.citations}</div>
+              <div class="stat-label">Citations</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">${researcher.stats.hIndex}</div>
+              <div class="stat-label">h-index</div>
+            </div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  });
+</script>
+
 </body>
 </html>
